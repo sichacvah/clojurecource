@@ -85,6 +85,14 @@
 (defn order-by* [data column]
   (if-not nil? data (sort-by column data)))
 
+(defn join-predicate* [element1 column1 element2 column2] (= (get element1 column1) (get element2 column2)))
+
+
+(defn collect-data2 [element1 column1 data2 column2]
+  (let [element1-col1-val (get element1 column1)]
+    (filter #(= (get % column2) element1-col1-val) data2)))
+
+
 ;; (join* (join* student-subject :student_id student :id) :subject_id subject :id)
 ;; => [{:subject "Math", :subject_id 1, :surname "Ivanov", :year 1998, :student_id 1, :id 1}
 ;;     {:subject "Math", :subject_id 1, :surname "Petrov", :year 1997, :student_id 2, :id 2}
@@ -99,7 +107,15 @@
   ;; 3. For each element of data1 (lets call it element1) find all elements of data2 (lets call each as element2) where column1 = column2.
   ;; 4. Use function 'merge' and merge element1 with each element2.
   ;; 5. Collect merged elements.
-  (reduce #(filter) [] data1))
+  (reduce (fn [result element1]
+            (->> (collect-data2 element1 column1 data2 column2)
+                 (reduce (fn [accum el2] (conj accum (merge el2 element1)))
+                         result))
+            )
+          [] data1))
+
+(join* student-subject :student_id student :id)
+(join* (join* student-subject :student_id student :id) :subject_id subject :id)
 
 
 ;; (perform-joins student-subject [[:student_id student :id] [:subject_id subject :id]])
